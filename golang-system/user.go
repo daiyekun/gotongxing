@@ -80,7 +80,7 @@ func (this *User) DoMessage(msg string) {
 			this.Name = newName
 			this.SendMsg("你的Name 已经修改:" + this.Name + "\n")
 		}
-	} else if len(msg) > 4 && strings.Contains("to|") {
+	} else if len(msg) > 4 && strings.Contains(msg, "to|") {
 		//消息格式： to|小王|消息内容
 		//1 获取对方的用户名
 		remoteName := strings.Split(msg, "|")[1]
