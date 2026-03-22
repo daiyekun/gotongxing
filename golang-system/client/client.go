@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"net"
+	"os"
 )
 
 type Client struct {
@@ -78,10 +80,34 @@ func (client *Client) Run() {
 			fmt.Println("私聊模式")
 			break
 		case 3:
-			fmt.Println("更新用户名称")
+			//fmt.Println("更新用户名称")
+			client.UpdateName()
 			break
 		}
 	}
+}
+
+// 更新用户名称
+func (client *Client) UpdateName() bool {
+	fmt.Println(">>>>请输入用户名：")
+	fmt.Scanln(&client.Name)
+
+	sendMsg := "rename|" + client.Name + "\n"
+	_, err := client.conn.Write([]byte(sendMsg))
+	if err != nil {
+		fmt.Println("conn.Write er:", err)
+		return false
+	}
+	return true
+}
+
+func (client *Client) DealResponse() {
+	io.Copy(os.Stdout, client.conn) // 这个就相当于下面这个for
+	// for {
+	// 	buf := make([]byte, 1024)
+	// 	client.conn.Read(buf)
+	// 	fmt.Println(buf)
+	// }
 }
 
 func main() {
@@ -93,7 +119,7 @@ func main() {
 	}
 
 	fmt.Println(">>>>服务器链接成功....")
-
+	go client.DealResponse()
 	//启动客户端
 	//select {}
 
