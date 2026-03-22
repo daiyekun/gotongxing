@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -52,7 +53,12 @@ func (this *Server) Handler(conn net.Conn) {
 	//当前连接的业务
 	//fmt.Println("链接成功.....")
 	user := NewUser(conn, this)
+
 	user.Online()
+
+	//监听当前用户是否活跃的channel
+	isLive := make(chan bool)
+
 	//接受用户发来的消息
 	go func() {
 		buff := make([]byte, 4096)
@@ -73,11 +79,32 @@ func (this *Server) Handler(conn net.Conn) {
 			//将消息广播
 			//this.BroadCast(user, msg)
 			user.DoMessage(msg)
+
+			//用户的任意输入，代表当前用户活跃
+			isLive <- true
 		}
 	}()
 
 	//阻塞
-	select {}
+	select {
+	case <-isLive:
+		//当前用户是活跃的，应该重置定时器
+		//不做任何事情，为了激活select ,更新下面定时器
+	case <-time.After(time.Second * 10):
+		//已经超时
+		//当前的用户User强制关闭
+		user.SendMsg("你被踢了")
+
+		//销毁链接资源
+		close(user.C)
+
+		//关闭链接
+		conn.Close()
+
+		//推出当前handler
+		return
+
+	}
 }
 
 func (this *Server) Start() {
