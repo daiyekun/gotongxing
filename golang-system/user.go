@@ -80,6 +80,30 @@ func (this *User) DoMessage(msg string) {
 			this.Name = newName
 			this.SendMsg("你的Name 已经修改:" + this.Name + "\n")
 		}
+	} else if len(msg) > 4 && strings.Contains("to|") {
+		//消息格式： to|小王|消息内容
+		//1 获取对方的用户名
+		remoteName := strings.Split(msg, "|")[1]
+		if remoteName == "" {
+			this.SendMsg("消息格式不正确，请使用\"to|张三|你好\"格式。\n")
+			return
+		}
+
+		//2 获取用户名称，得到对方User对象
+		remoteUser, ok := this.server.OnlieMap[remoteName]
+		if !ok {
+			this.SendMsg("该用户名不存在\n")
+			return
+		}
+
+		//3.获取消息内容，通对方的User对象发送消息
+		content := strings.Split(msg, "|")[2]
+		if content == "" {
+			this.SendMsg("五消息内容，请重发\n")
+			return
+		}
+		remoteUser.SendMsg(this.Name + "私信：" + content)
+
 	} else {
 		this.server.BroadCast(this, msg)
 	}
