@@ -11,6 +11,7 @@ type Client struct {
 	ServerPort int
 	Name       string
 	conn       net.Conn
+	flag       int //当前菜单模式
 }
 
 func NewClient(serverIp string, serverPort int) *Client {
@@ -18,6 +19,7 @@ func NewClient(serverIp string, serverPort int) *Client {
 	client := &Client{
 		ServerIP:   serverIp,
 		ServerPort: serverPort,
+		flag:       9999,
 	}
 
 	conn, err := net.Dial("tcp", net.JoinHostPort(serverIp, fmt.Sprintf("%d", serverPort)))
@@ -33,6 +35,24 @@ func NewClient(serverIp string, serverPort int) *Client {
 	return client
 }
 
+// 菜单提示
+func (client *Client) menu() bool {
+	var flag int
+	fmt.Println("1.公聊模式")
+	fmt.Println("2.私聊天模式")
+	fmt.Println("3.更新用户名")
+	fmt.Println("0.退出")
+
+	fmt.Scanln(&flag)
+	if flag >= 0 && flag <= 3 {
+		client.flag = flag
+		return true
+	} else {
+		fmt.Println("..>>>>请输入合法范围内值<<<<<<")
+		return false
+	}
+}
+
 var serverIp string
 var serverPort int
 
@@ -42,6 +62,26 @@ func init() {
 	flag.StringVar(&serverIp, "ip", "127.0.0.1", "设置服务器Ip（默认：127.0.0.1）")
 	flag.IntVar(&serverPort, "port", 8888, "设置端口默认8888")
 
+}
+
+func (client *Client) Run() {
+	for client.flag != 0 {
+		for client.menu() != true {
+
+		}
+		//根据不同模式处理不通业务
+		switch client.flag {
+		case 1:
+			fmt.Println("公聊模式")
+			break
+		case 2:
+			fmt.Println("私聊模式")
+			break
+		case 3:
+			fmt.Println("更新用户名称")
+			break
+		}
+	}
 }
 
 func main() {
@@ -54,41 +94,8 @@ func main() {
 
 	fmt.Println(">>>>服务器链接成功....")
 
-	// 启动一个协程来处理从服务器接收到的消息
-	go func() {
-		buf := make([]byte, 4096)
-		for {
-			n, err := client.conn.Read(buf)
-			if err != nil {
-				fmt.Println("连接断开:", err)
-				return
-			}
-			fmt.Println("收到服务器消息:", string(buf[:n]))
-		}
-	}()
-
-	// 启动一个协程来处理用户输入并发送给服务器
-	go func() {
-		for {
-			var msg string
-			fmt.Print("请输入消息: ")
-			// 注意：在实际生产中，混合使用 fmt.Scan 和 net.Read 可能会有缓冲问题，
-			// 这里仅做简单演示。更推荐使用 bufio.NewReader(os.Stdin)
-			if _, err := fmt.Scanln(&msg); err != nil {
-				continue
-			}
-			if msg == "quit" {
-				client.conn.Close()
-				return
-			}
-			_, err := client.conn.Write([]byte(msg + "\n"))
-			if err != nil {
-				fmt.Println("发送失败:", err)
-				return
-			}
-		}
-	}()
-
 	//启动客户端
-	select {}
+	//select {}
+
+	client.Run()
 }
